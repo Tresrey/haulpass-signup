@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Haul Pass Trash Valet | Sign Up</title>
+<meta name="description" content="Doorstep trash valet for your apartment. Trash picked up from your door 2x a week for $10/month.">
+<style>
+  :root {
+    --green: #1f7a4d;
+    --green-dark: #165c3a;
+    --ink: #1c2321;
+    --muted: #5b6662;
+    --bg: #f5f7f6;
+    --card: #ffffff;
+    --line: #dde3e0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.5;
+  }
+  header {
+    background: var(--green);
+    color: #fff;
+    padding: 48px 16px 64px;
+    text-align: center;
+  }
+  header h1 { margin: 0 0 8px; font-size: 2.2rem; }
+  header p { margin: 0 auto; max-width: 560px; font-size: 1.15rem; opacity: .95; }
+  main { max-width: 960px; margin: -40px auto 0; padding: 0 16px 48px; }
+  .grid { display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 28px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.05);
+  }
+  .price { font-size: 3rem; font-weight: 700; color: var(--green); margin: 0; }
+  .price span { font-size: 1.1rem; font-weight: 500; color: var(--muted); }
+  ul.features { padding-left: 0; list-style: none; margin: 20px 0 0; }
+  ul.features li { padding: 8px 0 8px 30px; position: relative; border-top: 1px solid var(--line); }
+  ul.features li::before { content: "✓"; position: absolute; left: 4px; color: var(--green); font-weight: 700; }
+  h2 { margin-top: 0; }
+  label { display: block; font-weight: 600; margin: 14px 0 4px; font-size: .95rem; }
+  input {
+    width: 100%; padding: 11px 12px; font-size: 1rem;
+    border: 1px solid var(--line); border-radius: 8px;
+  }
+  input:focus { outline: 2px solid var(--green); border-color: var(--green); }
+  .row { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+  .check { display: flex; gap: 8px; align-items: flex-start; font-weight: 400; margin-top: 16px; }
+  .check input { width: auto; margin-top: 4px; }
+  button {
+    width: 100%; margin-top: 20px; padding: 14px; font-size: 1.1rem; font-weight: 700;
+    color: #fff; background: var(--green); border: 0; border-radius: 8px; cursor: pointer;
+  }
+  button:hover { background: var(--green-dark); }
+  button:disabled { opacity: .6; cursor: wait; }
+  .note { color: var(--muted); font-size: .85rem; margin-top: 10px; text-align: center; }
+  .error { color: #b3261e; font-size: .95rem; margin-top: 10px; display: none; }
+  section.how { margin-top: 40px; }
+  .steps { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+  .steps .card { padding: 20px; }
+  .steps b { color: var(--green); }
+  footer { text-align: center; color: var(--muted); font-size: .9rem; padding: 24px 16px 40px; }
+  footer a { color: var(--green); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Haul Pass Trash Valet</h1>
+  <p>Leave your trash at your door. We haul it to the dumpster twice a week, so you never have to.</p>
+</header>
+
+<main>
+  <div class="grid">
+    <div class="card">
+      <p class="price">$10<span> / month</span></p>
+      <ul class="features">
+        <li>Trash picked up from your apartment door 2x per week</li>
+        <li>No more trips to the dumpster</li>
+        <li>Billed monthly, cancel anytime</li>
+        <li>Secure checkout with Stripe</li>
+      </ul>
+    </div>
+
+    <form class="card" id="signup" novalidate>
+      <h2>Sign up</h2>
+      <label for="name">Full name</label>
+      <input id="name" name="name" autocomplete="name" required>
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required>
+
+      <label for="phone">Phone</label>
+      <input id="phone" name="phone" type="tel" autocomplete="tel" required>
+
+      <div class="row">
+        <div>
+          <label for="complex">Apartment complex</label>
+          <input id="complex" name="complex" required>
+        </div>
+        <div>
+          <label for="unit">Unit #</label>
+          <input id="unit" name="unit" required>
+        </div>
+      </div>
+
+      <label class="check">
+        <input type="checkbox" id="agree" required>
+        I understand my subscription is $10/month and renews monthly until I cancel.
+      </label>
+
+      <p class="error" id="error"></p>
+      <button type="submit" id="submitBtn">Continue to checkout</button>
+      <p class="note">You'll finish payment on Stripe's secure checkout page.</p>
+    </form>
+  </div>
+
+  <section class="how">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="card"><b>1. Sign up</b><br>Enter your info and pay $10/month.</div>
+      <div class="card"><b>2. Bag it</b><br>Set your tied trash bag outside your door on pickup nights.</div>
+      <div class="card"><b>3. We haul it</b><br>Our valet carries it to the dumpster. Done.</div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Questions? Gavin Rice · <a href="tel:+12107991368">210-799-1368</a> ·
+  <a href="mailto:haulpassvalet@gmail.com">haulpassvalet@gmail.com</a><br>
+  © <span id="year"></span> Haul Pass Trash Valet
+</footer>
+
+<script>
+  // ================== SETTINGS ==================
+  // Paste your Stripe Payment Link between the quotes:
+  const STRIPE_PAYMENT_LINK = "PASTE_STRIPE_PAYMENT_LINK_HERE";
+  // Sign-up details are emailed here (via FormSubmit.co) before checkout:
+  const NOTIFY_EMAIL = "haulpassvalet@gmail.com";
+  // ==============================================
+
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  const form = document.getElementById("signup");
+  const errorEl = document.getElementById("error");
+  const btn = document.getElementById("submitBtn");
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.style.display = "block";
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorEl.style.display = "none";
+
+    const data = Object.fromEntries(new FormData(form));
+    for (const [k, v] of Object.entries(data)) data[k] = v.trim();
+
+    if (!data.name || !data.email || !data.phone || !data.complex || !data.unit) {
+      return showError("Please fill in every field.");
+    }
+    if (!/^\S+@\S+\.\S+$/.test(data.email)) return showError("Please enter a valid email.");
+    if (data.phone.replace(/\D/g, "").length < 10) return showError("Please enter a valid phone number.");
+    if (!document.getElementById("agree").checked) return showError("Please check the box to continue.");
+    if (!STRIPE_PAYMENT_LINK.startsWith("https://")) {
+      return showError("Checkout isn't set up yet. Please call or email us to sign up.");
+    }
+
+    btn.disabled = true;
+    btn.textContent = "One moment…";
+
+    // Email the sign-up details to Haul Pass. Checkout still continues if this fails.
+    try {
+      await fetch("https://formsubmit.co/ajax/" + NOTIFY_EMAIL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+          _subject: "New Haul Pass sign-up: " + data.name + " (" + data.complex + " #" + data.unit + ")",
+          _template: "table",
+          Name: data.name,
+          Email: data.email,
+          Phone: data.phone,
+          "Apartment complex": data.complex,
+          Unit: data.unit
+        })
+      });
+    } catch (err) { /* ignore and continue to checkout */ }
+
+    // Stripe Payment Links accept prefilled_email and client_reference_id in the URL.
+    const ref = (data.complex + "-" + data.unit).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 200);
+    const url = new URL(STRIPE_PAYMENT_LINK);
+    url.searchParams.set("prefilled_email", data.email);
+    url.searchParams.set("client_reference_id", ref);
+    window.location.href = url.toString();
+  });
+</script>
+</body>
+</html>
