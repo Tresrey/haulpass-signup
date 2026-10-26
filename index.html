@@ -70,7 +70,18 @@
   .steps .card { padding: 20px; }
   .steps b { color: var(--green); }
   footer { text-align: center; color: var(--muted); font-size: .9rem; padding: 24px 16px 40px; }
-  footer a { color: var(--green); }
+  footer a, .check a, dialog a { color: var(--green); }
+  dialog {
+    max-width: 560px; width: calc(100% - 32px); max-height: 85vh;
+    border: 0; border-radius: 12px; padding: 28px; color: var(--ink);
+    box-shadow: 0 10px 40px rgba(0,0,0,.25);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog h2 { margin-bottom: 4px; }
+  dialog h3 { font-size: 1rem; margin: 18px 0 4px; }
+  dialog p, dialog li { font-size: .95rem; margin: 0 0 6px; }
+  dialog ul { padding-left: 20px; margin: 0; }
+  dialog .updated { color: var(--muted); font-size: .85rem; }
 </style>
 </head>
 <body>
@@ -116,7 +127,7 @@
 
       <label class="check">
         <input type="checkbox" id="agree" required>
-        I understand my subscription is $10/month and renews monthly until I cancel.
+        <span>I agree to the <a href="#" class="terms-link">terms and conditions</a>.</span>
       </label>
 
       <p class="error" id="error"></p>
@@ -136,10 +147,50 @@
 </main>
 
 <footer>
-  Questions? Gavin Rice · <a href="tel:+12107991368">210-799-1368</a> ·
-  <a href="mailto:haulpassvalet@gmail.com">haulpassvalet@gmail.com</a><br>
+  Questions? <a href="tel:+12107991368">210-799-1368</a> · <a href="#" class="terms-link">Terms and Conditions</a><br>
   © <span id="year"></span> Haul Pass Trash Valet
 </footer>
+
+<dialog id="terms" aria-labelledby="termsTitle">
+  <h2 id="termsTitle" tabindex="-1" autofocus>Terms and Conditions</h2>
+  <p class="updated">Haul Pass Trash Valet · Last updated October 2026</p>
+
+  <h3>Service</h3>
+  <p>Haul Pass picks up trash from outside your apartment door 2 times per week and takes it to your community's dumpster or trash area. Pickup days and times depend on your apartment complex.</p>
+
+  <h3>Billing</h3>
+  <ul>
+    <li>The price is $10 per month, billed automatically to your card each month starting on the day you sign up.</li>
+    <li>Payments are processed securely by Stripe. Haul Pass never sees or stores your full card number.</li>
+    <li>If the price ever changes, we'll tell you at least 30 days in advance.</li>
+  </ul>
+
+  <h3>No minimum, cancel anytime</h3>
+  <ul>
+    <li>There is no contract and no minimum membership length.</li>
+    <li>To cancel, call or text 210-799-1368. Service continues through the end of the month you already paid for, and you won't be charged again.</li>
+    <li>We don't give partial refunds for unused days in a month.</li>
+  </ul>
+
+  <h3>What to put out</h3>
+  <ul>
+    <li>Put your trash in a tied bag, no more than 2 bags per pickup, each under 30 lbs, outside your door by the pickup time.</li>
+    <li>We don't take hazardous waste, chemicals, needles, loose glass, furniture, appliances, or anything your complex doesn't allow in its dumpster.</li>
+    <li>Recycling is picked up only if your complex has recycling bins.</li>
+    <li>We may skip bags that are leaking, untied, overweight, or not allowed.</li>
+  </ul>
+
+  <h3>Missed pickups</h3>
+  <p>If we miss a scheduled pickup, let us know and we'll come back as soon as we can. Service may be delayed by severe weather, holidays, or limited access to your property.</p>
+
+  <h3>Your property's rules</h3>
+  <p>You agree to follow your apartment complex's rules about trash. We may pause or end service if your complex doesn't allow it, and if that happens you won't be charged again.</p>
+
+  <h3>Contact</h3>
+  <p>Questions? Call or text <a href="tel:+12107991368">210-799-1368</a>.</p>
+
+  <button type="button" id="closeTerms">Close</button>
+</dialog>
 
 <script>
   // ================== SETTINGS ==================
@@ -148,6 +199,15 @@
   // Sign-up details are emailed here (via FormSubmit.co) before checkout:
   const NOTIFY_EMAIL = "haulpassvalet@gmail.com";
   // ==============================================
+
+  const terms = document.getElementById("terms");
+  document.querySelectorAll(".terms-link").forEach(a => a.addEventListener("click", (e) => {
+    e.preventDefault();
+    terms.showModal();
+    terms.scrollTop = 0;
+  }));
+  document.getElementById("closeTerms").addEventListener("click", () => terms.close());
+  terms.addEventListener("click", (e) => { if (e.target === terms) terms.close(); });
 
   document.getElementById("year").textContent = new Date().getFullYear();
 
@@ -172,9 +232,9 @@
     }
     if (!/^\S+@\S+\.\S+$/.test(data.email)) return showError("Please enter a valid email.");
     if (data.phone.replace(/\D/g, "").length < 10) return showError("Please enter a valid phone number.");
-    if (!document.getElementById("agree").checked) return showError("Please check the box to continue.");
+    if (!document.getElementById("agree").checked) return showError("Please agree to the terms and conditions to continue.");
     if (!STRIPE_PAYMENT_LINK.startsWith("https://")) {
-      return showError("Checkout isn't set up yet. Please call or email us to sign up.");
+      return showError("Checkout isn't set up yet. Please call or text 210-799-1368 to sign up.");
     }
 
     btn.disabled = true;
