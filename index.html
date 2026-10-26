@@ -64,10 +64,13 @@
   button:hover { background: var(--green-dark); }
   button:disabled { opacity: .6; cursor: wait; }
   .note { color: var(--muted); font-size: .85rem; margin-top: 10px; text-align: center; }
-  #checkout { display: none; text-align: center; }
-  #checkout p { margin: 0 0 16px; }
-  #checkout .back { display: inline-block; margin-top: 16px; color: var(--green); font-size: .9rem; }
-  .error { color: #b3261e; font-size: .95rem; margin-top: 10px; display: none; }
+  #buyArea { margin-top: 20px; text-align: center; }
+  #buyButton { display: none; }
+  .placeholder {
+    padding: 14px; border-radius: 8px; background: var(--line);
+    color: var(--muted); font-weight: 600;
+  }
+
   section.how { margin-top: 40px; }
   .steps { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); }
   @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
@@ -107,14 +110,6 @@
       </ul>
     </div>
 
-    <div class="card" id="checkout">
-      <h2>Almost done!</h2>
-      <p id="checkoutMsg"></p>
-      <div id="buyButton"></div>
-      <p class="note">Trouble paying? Call or text <a href="tel:+12107991368">210-799-1368</a>.</p>
-      <a href="#" class="back" id="editInfo">Edit my info</a>
-    </div>
-
     <form class="card" id="signup" novalidate>
       <h2>Sign up</h2>
       <label for="name">Full name</label>
@@ -142,9 +137,11 @@
         <span>I agree to the <a href="#" class="terms-link">terms and conditions</a>.</span>
       </label>
 
-      <p class="error" id="error"></p>
-      <button type="submit" id="submitBtn">Continue to checkout</button>
-      <p class="note">You'll finish payment on Stripe's secure checkout page.</p>
+      <div id="buyArea">
+        <div class="placeholder" id="placeholder">Fill in your info above to check out</div>
+        <div id="buyButton"></div>
+      </div>
+      <p class="note">Secure checkout by Stripe. Trouble paying? Call or text <a href="tel:+12107991368">210-799-1368</a>.</p>
     </form>
   </div>
 
@@ -225,70 +222,79 @@
   document.getElementById("year").textContent = new Date().getFullYear();
 
   const form = document.getElementById("signup");
-  const errorEl = document.getElementById("error");
-  const btn = document.getElementById("submitBtn");
+  const placeholder = document.getElementById("placeholder");
+  const buyButton = document.getElementById("buyButton");
 
-  function showError(msg) {
-    errorEl.textContent = msg;
-    errorEl.style.display = "block";
-  }
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    errorEl.style.display = "none";
-
+  function readForm() {
     const data = Object.fromEntries(new FormData(form));
     for (const [k, v] of Object.entries(data)) data[k] = v.trim();
+    return data;
+  }
 
-    if (!data.name || !data.email || !data.phone || !data.complex || !data.unit) {
-      return showError("Please fill in every field.");
+  // Returns a message saying what's missing, or "" when the form is ready.
+  function missing(d) {
+    if (!d.name || !d.email || !d.phone || !d.complex || !d.unit) return "Fill in your info above to check out";
+    if (!/^\S+@\S+\.\S+$/.test(d.email)) return "Enter a valid email to check out";
+    if (d.phone.replace(/\D/g, "").length < 10) return "Enter a valid phone number to check out";
+    if (!document.getElementById("agree").checked) return "Agree to the terms and conditions to check out";
+    return "";
+  }
+
+  // Show the Stripe Buy Button only when the form is complete, with the resident's
+  // email and complex/unit passed to Stripe. Rebuilt whenever those values change.
+  let shownKey = "";
+  function update() {
+    const d = readForm();
+    const msg = missing(d);
+    if (msg) {
+      placeholder.textContent = msg;
+      placeholder.style.display = "block";
+      buyButton.style.display = "none";
+      return;
     }
-    if (!/^\S+@\S+\.\S+$/.test(data.email)) return showError("Please enter a valid email.");
-    if (data.phone.replace(/\D/g, "").length < 10) return showError("Please enter a valid phone number.");
-    if (!document.getElementById("agree").checked) return showError("Please agree to the terms and conditions to continue.");
+    const ref = (d.complex + "-" + d.unit).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 200);
+    const key = d.email + "|" + ref;
+    if (key !== shownKey) {
+      const buy = document.createElement("stripe-buy-button");
+      buy.setAttribute("buy-button-id", STRIPE_BUY_BUTTON_ID);
+      buy.setAttribute("publishable-key", STRIPE_PUBLISHABLE_KEY);
+      buy.setAttribute("customer-email", d.email);
+      buy.setAttribute("client-reference-id", ref);
+      buyButton.replaceChildren(buy);
+      shownKey = key;
+    }
+    placeholder.style.display = "none";
+    buyButton.style.display = "block";
+  }
+  form.addEventListener("input", update);
+  form.addEventListener("change", update);
+  form.addEventListener("submit", (e) => e.preventDefault());
 
-    btn.disabled = true;
-    btn.textContent = "One moment…";
-
-    // Email the sign-up details to Haul Pass. Checkout still continues if this fails.
-    try {
-      await fetch("https://formsubmit.co/ajax/" + NOTIFY_EMAIL, {
+  // The Stripe button lives in an iframe, so a click on it shows up as the page losing
+  // focus to that iframe. When that happens, email the sign-up details to Haul Pass.
+  let sentKey = "";
+  window.addEventListener("blur", () => {
+    setTimeout(() => {
+      if (!buyButton.contains(document.activeElement)) return;
+      const d = readForm();
+      const key = JSON.stringify(d);
+      if (missing(d) || key === sentKey) return;
+      sentKey = key;
+      fetch("https://formsubmit.co/ajax/" + NOTIFY_EMAIL, {
         method: "POST",
+        keepalive: true,
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({
-          _subject: "New Haul Pass sign-up: " + data.name + " (" + data.complex + " #" + data.unit + ")",
+          _subject: "New Haul Pass sign-up: " + d.name + " (" + d.complex + " #" + d.unit + ")",
           _template: "table",
-          Name: data.name,
-          Email: data.email,
-          Phone: data.phone,
-          "Apartment complex": data.complex,
-          Unit: data.unit
+          Name: d.name,
+          Email: d.email,
+          Phone: d.phone,
+          "Apartment complex": d.complex,
+          Unit: d.unit
         })
-      });
-    } catch (err) { /* ignore and continue to checkout */ }
-
-    // Show the Stripe Buy Button with the resident's email and unit filled in.
-    const ref = (data.complex + "-" + data.unit).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 200);
-    const buy = document.createElement("stripe-buy-button");
-    buy.setAttribute("buy-button-id", STRIPE_BUY_BUTTON_ID);
-    buy.setAttribute("publishable-key", STRIPE_PUBLISHABLE_KEY);
-    buy.setAttribute("customer-email", data.email);
-    buy.setAttribute("client-reference-id", ref);
-    document.getElementById("buyButton").replaceChildren(buy);
-    document.getElementById("checkoutMsg").textContent =
-      "Thanks, " + data.name.split(" ")[0] + "! Click below to pay $10/month securely with Stripe.";
-    form.style.display = "none";
-    checkout.style.display = "block";
-    checkout.scrollIntoView({ behavior: "smooth", block: "start" });
-    btn.disabled = false;
-    btn.textContent = "Continue to checkout";
-  });
-
-  const checkout = document.getElementById("checkout");
-  document.getElementById("editInfo").addEventListener("click", (e) => {
-    e.preventDefault();
-    checkout.style.display = "none";
-    form.style.display = "block";
+      }).catch(() => {});
+    }, 0);
   });
 </script>
 </body>
