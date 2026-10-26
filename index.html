@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Haul Pass Trash Valet | Sign Up</title>
 <meta name="description" content="Doorstep trash valet for your apartment. Trash picked up from your door 2x a week for $10/month.">
+<script async src="https://js.stripe.com/v3/buy-button.js"></script>
 <style>
   :root {
     --green: #1f7a4d;
@@ -63,6 +64,9 @@
   button:hover { background: var(--green-dark); }
   button:disabled { opacity: .6; cursor: wait; }
   .note { color: var(--muted); font-size: .85rem; margin-top: 10px; text-align: center; }
+  #checkout { display: none; text-align: center; }
+  #checkout p { margin: 0 0 16px; }
+  #checkout .back { display: inline-block; margin-top: 16px; color: var(--green); font-size: .9rem; }
   .error { color: #b3261e; font-size: .95rem; margin-top: 10px; display: none; }
   section.how { margin-top: 40px; }
   .steps { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); }
@@ -70,7 +74,7 @@
   .steps .card { padding: 20px; }
   .steps b { color: var(--green); }
   footer { text-align: center; color: var(--muted); font-size: .9rem; padding: 24px 16px 40px; }
-  footer a, .check a, dialog a { color: var(--green); }
+  footer a, .check a, dialog a, .note a { color: var(--green); }
   dialog {
     max-width: 560px; width: calc(100% - 32px); max-height: 85vh;
     border: 0; border-radius: 12px; padding: 28px; color: var(--ink);
@@ -101,6 +105,14 @@
         <li>Billed monthly, cancel anytime</li>
         <li>Secure checkout with Stripe</li>
       </ul>
+    </div>
+
+    <div class="card" id="checkout">
+      <h2>Almost done!</h2>
+      <p id="checkoutMsg"></p>
+      <div id="buyButton"></div>
+      <p class="note">Trouble paying? Call or text <a href="tel:+12107991368">210-799-1368</a>.</p>
+      <a href="#" class="back" id="editInfo">Edit my info</a>
     </div>
 
     <form class="card" id="signup" novalidate>
@@ -194,8 +206,9 @@
 
 <script>
   // ================== SETTINGS ==================
-  // Paste your Stripe Payment Link between the quotes:
-  const STRIPE_PAYMENT_LINK = "PASTE_STRIPE_PAYMENT_LINK_HERE";
+  // Stripe Buy Button (from Stripe Dashboard > Payment Links > Buy button):
+  const STRIPE_BUY_BUTTON_ID = "buy_btn_1UUtfbAtIyFKyhwhC2u0GjEA";
+  const STRIPE_PUBLISHABLE_KEY = "pk_live_51TUHMqAtIyFKyhwhr4OLKONrN0nYYLE0mFjQ6CzpzDRpADXQYIxVczTnUmI2vIU9UfQcxE5UZiGFAKn8yaAsYPW1008bre5FzQ";
   // Sign-up details are emailed here (via FormSubmit.co) before checkout:
   const NOTIFY_EMAIL = "haulpassvalet@gmail.com";
   // ==============================================
@@ -233,9 +246,6 @@
     if (!/^\S+@\S+\.\S+$/.test(data.email)) return showError("Please enter a valid email.");
     if (data.phone.replace(/\D/g, "").length < 10) return showError("Please enter a valid phone number.");
     if (!document.getElementById("agree").checked) return showError("Please agree to the terms and conditions to continue.");
-    if (!STRIPE_PAYMENT_LINK.startsWith("https://")) {
-      return showError("Checkout isn't set up yet. Please call or text 210-799-1368 to sign up.");
-    }
 
     btn.disabled = true;
     btn.textContent = "One moment…";
@@ -257,12 +267,28 @@
       });
     } catch (err) { /* ignore and continue to checkout */ }
 
-    // Stripe Payment Links accept prefilled_email and client_reference_id in the URL.
+    // Show the Stripe Buy Button with the resident's email and unit filled in.
     const ref = (data.complex + "-" + data.unit).replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 200);
-    const url = new URL(STRIPE_PAYMENT_LINK);
-    url.searchParams.set("prefilled_email", data.email);
-    url.searchParams.set("client_reference_id", ref);
-    window.location.href = url.toString();
+    const buy = document.createElement("stripe-buy-button");
+    buy.setAttribute("buy-button-id", STRIPE_BUY_BUTTON_ID);
+    buy.setAttribute("publishable-key", STRIPE_PUBLISHABLE_KEY);
+    buy.setAttribute("customer-email", data.email);
+    buy.setAttribute("client-reference-id", ref);
+    document.getElementById("buyButton").replaceChildren(buy);
+    document.getElementById("checkoutMsg").textContent =
+      "Thanks, " + data.name.split(" ")[0] + "! Click below to pay $10/month securely with Stripe.";
+    form.style.display = "none";
+    checkout.style.display = "block";
+    checkout.scrollIntoView({ behavior: "smooth", block: "start" });
+    btn.disabled = false;
+    btn.textContent = "Continue to checkout";
+  });
+
+  const checkout = document.getElementById("checkout");
+  document.getElementById("editInfo").addEventListener("click", (e) => {
+    e.preventDefault();
+    checkout.style.display = "none";
+    form.style.display = "block";
   });
 </script>
 </body>
